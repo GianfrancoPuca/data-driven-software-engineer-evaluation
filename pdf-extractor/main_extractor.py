@@ -25,16 +25,23 @@ def process_single_pdf(filename, pdf_dir=PDF_DIR):
 
 
 def process_pdfs_in_parallel(pdf_dir, output_file):
+    """Elabora i PDF in parallelo e salva i risultati in un file CSV."""
     data = []
+    pdf_files = []
+    for root, dirs, files in os.walk(pdf_dir):
+        for file in files:
+            if file.endswith('.pdf'):
+                pdf_files.append(os.path.join(root, file))
+
+    logger.info(f"Trovati {len(pdf_files)} file PDF da elaborare.")
     with ThreadPoolExecutor() as executor:
-        pdf_files = [f for f in os.listdir(pdf_dir) if f.endswith('.pdf')]
-        logger.info(f"Trovati {len(pdf_files)} file PDF da elaborare.")
-        results = executor.map(lambda f: process_single_pdf(f, pdf_dir), pdf_files)
+        results = executor.map(lambda f: process_single_pdf(os.path.basename(f), os.path.dirname(f)), pdf_files)
         data = [result for result in results if result is not None]
     if data:
         logger.info(f"Salvataggio dei dati estratti in {output_file}")
         save_data_to_csv(data, output_file)
         logger.info("Salvataggio completato.")
+
 
         
 def run_pdf_processing():
